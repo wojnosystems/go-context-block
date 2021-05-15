@@ -4,7 +4,7 @@ import (
 	"context"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"go-context-block/contextBlock"
+	"github.com/wojnosystems/go-context-block/contextBlock"
 	"time"
 )
 
@@ -15,19 +15,20 @@ var _ = Describe("WithTimeout", func() {
 	BeforeSuite(func() {
 		bg = context.Background()
 	})
-	Context("short-job", func() {
-		It("succeeds", func() {
-			Expect(contextBlock.WithTimeout(bg, 10*time.Second, func(ctx context.Context) {
-				return
-			})).Should(Succeed())
+	It("has a deadline", func() {
+		contextBlock.WithTimeout(bg, 10*time.Second, func(ctx context.Context) {
+			_, hasDeadline := ctx.Deadline()
+			Expect(hasDeadline).Should(BeTrue())
 		})
 	})
-	Context("long-running job", func() {
-		It("fails", func() {
-			Expect(contextBlock.WithTimeout(bg, 1*time.Microsecond, func(ctx context.Context) {
-				<-time.After(1 * time.Second)
-				return
-			})).ShouldNot(Succeed())
+	Context("after block completes", func() {
+		It("cancels the context", func() {
+			var escapedContext context.Context
+			contextBlock.WithTimeout(bg, 10*time.Second, func(ctx context.Context) {
+				Expect(ctx.Err()).ShouldNot(HaveOccurred())
+				escapedContext = ctx
+			})
+			Expect(escapedContext.Err()).Should(HaveOccurred())
 		})
 	})
 })
