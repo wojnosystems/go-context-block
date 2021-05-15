@@ -1,4 +1,4 @@
-module go-context-block
+module github.com/wojnosystems/go-context-block
 
 go 1.16
 
